@@ -1,53 +1,50 @@
-import pandas as pd
+# -*- coding: utf-8 -*-
+import argparse
+import logging
+
 import numpy as np
-import os
-import gc
-
-import random
-
+import pandas as pd
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-import torchmetrics
-
-from sklearn.utils import shuffle
-
-
-import transformers
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.core.lightning import LightningModule
+from torch.utils.data import DataLoader, Dataset
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
+import easydict
 
-from tqdm.notebook import tqdm, trange
-import warnings
-warnings.filterwarnings("ignore")
+# parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
-parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
+# parser.add_argument('--chat',
+#                     action='store_true',
+#                     default=False,
+#                     help='response generation on given user input')
 
-parser.add_argument('--chat',
-                    action='store_true',
-                    default=False,
-                    help='response generation on given user input')
+# parser.add_argument('--sentiment',
+#                     type=str,
+#                     default='0',
+#                     help='sentiment for system. 0 is neutral, 1 is negative, 2 is positive.')
 
-parser.add_argument('--sentiment',
-                    type=str,
-                    default='0',
-                    help='sentiment for system. 0 is neutral, 1 is negative, 2 is positive.')
+# parser.add_argument('--model_params',
+#                     type=str,
+#                     default='model_chp/model_-last.ckpt',
+#                     help='model binary for starting chat')
 
-parser.add_argument('--model_params',
-                    type=str,
-                    default='model_chp/model_-last.ckpt',
-                    help='model binary for starting chat')
+# parser.add_argument('--train',
+#                     action='store_true',
+#                     default=False,
+#                     help='for training')
 
-parser.add_argument('--train',
-                    action='store_true',
-                    default=False,
-                    help='for training')
+args = easydict[{
+    'chat':'store_true',
+    'sentiment':'0',
+    'model_params':'model_chp_model_-last.ckpt',
+    'train':'store_true',
+    'max-len':64,
+    'batch-size':96,
+    'lr':5e-5,
+    'warmup-ratio':0.1
+}]
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -134,8 +131,8 @@ class KoGPT2Chat(LightningModule):
         self.loss_function = torch.nn.CrossEntropyLoss(reduction='none')
 
     @staticmethod
-    def add_model_specific_args(parent_parser):
-        return parser
+    def add_model_specific_args(parent_args):
+        return args
 
     def forward(self, inputs):
         # (batch, seq_len, hiddens)
@@ -208,9 +205,9 @@ class KoGPT2Chat(LightningModule):
         return q
 
 
-parser = KoGPT2Chat.add_model_specific_args(parser)
-parser = Trainer.add_argparse_args(parser)
-args = parser.parse_args()
+# parser = KoGPT2Chat.add_model_specific_args(parser)
+# parser = Trainer.add_argparse_args(parser)
+# args = parser.parse_args()
 logging.info(args)
 
 if __name__ == "__main__":
