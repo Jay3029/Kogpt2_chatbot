@@ -1,16 +1,31 @@
-# -*- coding: utf-8 -*-
-import argparse
-import logging
-
-import numpy as np
 import pandas as pd
+import numpy as np
+import os
+import gc
+
+import random
+
 import torch
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.core.lightning import LightningModule
-from torch.utils.data import DataLoader, Dataset
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+import torchmetrics
+
+from sklearn.utils import shuffle
+
+
+import transformers
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
+
+from tqdm.notebook import tqdm, trange
+import warnings
+warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
